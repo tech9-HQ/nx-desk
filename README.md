@@ -1,8 +1,9 @@
 # **NX-Desk**
 
-NX-Desk is a modern, containerized React + Vite frontend application designed for enterprise-grade deployment. It supports scalable architecture, cloud-native deployment, AI-powered proposal generation workflows, and seamless integration with Azure Container Apps.
+NX-Desk is a modern, containerized **React + Vite** frontend application designed for **enterprise-grade deployment**.
+It supports scalable architecture, cloud-native deployment, AI-powered proposal generation workflows, and seamless integration with **Azure Container Apps**.
 
-This documentation covers architecture, local development, Dockerization, CI/CD, custom domain setup, HTTPS, environment management, and operational best practices.
+This documentation covers full architecture, development workflow, Dockerization, CI/CD, custom domains, HTTPS configuration, environment management, and operational best practices.
 
 ---
 
@@ -15,7 +16,13 @@ NX-Desk is built for:
 * Modular multi-agent architecture
 * Deployment to Azure using **Docker + Azure Container Apps + ACR**
 * Custom domain mapping and **Managed HTTPS SSL**
-* Future expansion: backend APIs, Supabase/Convex integration, autoscaling, AI orchestration (CrewAI), and CI/CD
+* Future expansion:
+
+  * Backend APIs
+  * Supabase / Convex integration
+  * Autoscaling
+  * CrewAI orchestration
+  * CI/CD automation
 
 ---
 
@@ -25,11 +32,11 @@ NX-Desk is built for:
 | ---------------- | -------------------------------------------------- |
 | Frontend         | React + Vite, TailwindCSS (optional), Lucide Icons |
 | Container        | Docker, Nginx (SPA routing)                        |
-| Cloud Deployment | Azure Container Apps                               |
+| Cloud Hosting    | Azure Container Apps                               |
 | Image Registry   | Azure Container Registry (ACR)                     |
-| Domain           | Custom DNS (CNAME + TXT verification)              |
-| Certificates     | Azure Managed Certificates                         |
-| Optional Backend | Supabase / Convex / FastAPI / Node.js              |
+| Domain & DNS     | Custom DNS (CNAME + TXT verification)              |
+| SSL Certificates | Azure Managed Certificates                         |
+| Optional Backend | Supabase, Convex, FastAPI, Node.js                 |
 | CI/CD            | GitHub Actions (optional)                          |
 
 ---
@@ -39,13 +46,13 @@ NX-Desk is built for:
 ```
 nx-desk/
 ├── public/
-│   └── assets/
-│       └── (images, logos, static files)
+│   └── assets/            # images, logos, static files
 ├── src/
 │   ├── components/
 │   ├── pages/
 │   ├── App.jsx
 │   └── main.jsx
+│
 ├── Dockerfile
 ├── nginx.conf
 ├── .dockerignore
@@ -71,22 +78,22 @@ npm install
 npm run dev
 ```
 
-Open in browser:
-➡ [http://localhost:5173](http://localhost:5173)
+Access at:
+➡ **[http://localhost:5173](http://localhost:5173)**
 
-### **Build for production**
+### **Production build**
 
 ```bash
 npm run build
 ```
 
-Output is generated in `dist/`.
+Build output is generated in **dist/**.
 
 ---
 
 ## **🐳 Docker (Production Build)**
 
-### **Build the Docker image**
+### **Build Docker image**
 
 ```bash
 docker build -t nx-desk:latest .
@@ -98,14 +105,14 @@ docker build -t nx-desk:latest .
 docker run -p 8080:80 nx-desk:latest
 ```
 
-App runs at:
-➡ [http://localhost:8080](http://localhost:8080)
+Access locally:
+➡ **[http://localhost:8080](http://localhost:8080)**
 
-### **Dockerfile features**
+### **Dockerfile Features**
 
 * Multi-stage build (Node → Nginx)
-* Optimized for production
-* Nginx handles SPA routing using:
+* Optimized static file serving
+* SPA routing via:
 
 ```nginx
 try_files $uri $uri/ /index.html;
@@ -113,27 +120,31 @@ try_files $uri $uri/ /index.html;
 
 ---
 
-## **☁️ Deploying to Azure Container Apps**
+# **☁️ Deploying to Azure Container Apps**
 
-### **1. Create Resource Group**
+## **1. Create Resource Group**
 
 ```bash
 az group create --name nx-desk --location "Central India"
 ```
 
-### **2. Create Azure Container Registry (ACR)**
+## **2. Create Azure Container Registry**
 
 ```bash
-az acr create --resource-group nx-desk --name nxdeskacrXXXX --sku Basic --admin-enabled true
+az acr create \
+  --resource-group nx-desk \
+  --name nxdeskacrXXXX \
+  --sku Basic \
+  --admin-enabled true
 ```
 
-### **3. Get ACR credentials**
+## **3. Fetch ACR Credentials**
 
 ```bash
 az acr credential show --name nxdeskacrXXXX --resource-group nx-desk
 ```
 
-### **4. Login & Push Docker Image**
+## **4. Login & Push Image**
 
 ```bash
 docker login nxdeskacrXXXX.azurecr.io -u <username> -p <password>
@@ -142,7 +153,7 @@ docker tag nx-desk:latest nxdeskacrXXXX.azurecr.io/nx-desk:latest
 docker push nxdeskacrXXXX.azurecr.io/nx-desk:latest
 ```
 
-### **5. Create Container Apps Environment**
+## **5. Create Container Apps Environment**
 
 ```bash
 az containerapp env create \
@@ -151,7 +162,7 @@ az containerapp env create \
   --location "Central India"
 ```
 
-### **6. Deploy Container App**
+## **6. Deploy Container App**
 
 ```bash
 az containerapp create \
@@ -166,7 +177,7 @@ az containerapp create \
   --registry-password <password>
 ```
 
-### **7. Get public URL**
+## **7. Retrieve Public URL**
 
 ```bash
 az containerapp show \
@@ -178,9 +189,9 @@ az containerapp show \
 
 ---
 
-## **🌐 Custom Domain + HTTPS Setup**
+# **🌐 Custom Domain + HTTPS**
 
-### **1. Add CNAME in DNS**
+## **1. Create CNAME record**
 
 ```
 Host: nxdesk
@@ -188,45 +199,47 @@ Type: CNAME
 Value: <container-app-fqdn>
 ```
 
-### **2. Add TXT Record for Domain Verification**
+## **2. Add TXT verification record**
 
-Azure will show something like:
+Azure displays a TXT record like:
 
 ```
-Type: TXT
 Host: asuid.nxdesk
+Type: TXT
 Value: <verification-hash>
 ```
 
-### **3. Validate Domain in Azure Portal**
+## **3. Validate in Azure Portal**
 
-Container App → Custom Domains → Add Domain → Validate
+Navigation:
+**Container App → Custom Domains → Add Domain → Validate**
 
-### **4. Create Managed Certificate**
+## **4. Create SSL Certificate**
 
-Container Apps Environment → Certificates → Create Managed Certificate
+**Container Apps Environment → Certificates → Create Managed Certificate**
 
-### **5. Bind Certificate**
+## **5. Bind SSL to Custom Domain**
 
-Container App → Custom domains → Add binding
-Binding type: **SNI**
-Certificate: **your issued certificate**
+**Container App → Custom domains → Add binding**
 
-### **Final URL:**
+* Binding type: **SNI**
+* Certificate: your managed certificate
+
+### **Final Domain**
 
 ➡ **[https://nxdesk.tech9labs.com](https://nxdesk.tech9labs.com)**
 
 ---
 
-## **🔧 Environment Variables (Optional)**
+# **🔧 Environment Variables (Optional)**
 
-For frontend build-time variables:
+### Build-time variables (Vite)
 
 ```
-VITE_PUBLIC_API_URL=...
+VITE_PUBLIC_API_URL=https://api.example.com
 ```
 
-For Container App runtime env:
+### Runtime variables (Azure Container Apps)
 
 ```bash
 az containerapp update \
@@ -237,13 +250,12 @@ az containerapp update \
 
 ---
 
-## **⚙️ Optional: GitHub Actions CI/CD**
+# **⚙️ GitHub Actions CI/CD (Optional)**
 
-Example workflow `.github/workflows/deploy.yml`:
+Example workflow in `.github/workflows/deploy.yml`:
 
 ```yaml
 name: Build & Deploy NX-Desk
-
 on:
   push:
     branches: [ "main" ]
@@ -251,10 +263,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Azure Login
         uses: azure/login@v1
@@ -267,7 +277,7 @@ jobs:
       - name: ACR Login
         run: az acr login --name ${{ secrets.ACR_NAME }}
 
-      - name: Tag & Push
+      - name: Tag & Push Image
         run: |
           docker tag nx-desk:latest ${{ secrets.ACR_NAME }}.azurecr.io/nx-desk:latest
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/nx-desk:latest
@@ -282,53 +292,51 @@ jobs:
 
 ---
 
-## **🩺 Troubleshooting**
+# **🩺 Troubleshooting**
 
-### **🔴 SSL Certificate Pending**
+### **SSL Certificate Pending**
 
 * TXT record must be EXACT
 * Wait 5–30 minutes
-* Refresh Azure Portal
+* Refresh Portal
 
-### **🔴 Domain not mapping**
+### **Domain not mapping**
 
-Check:
+Test with:
 
 ```
 dig nxdesk.tech9labs.com
 dig asuid.nxdesk.tech9labs.com TXT
 ```
 
-### **App shows blank screen**
+### **Blank Screen**
 
 * Missing SPA fallback in nginx.conf
 * Incorrect Vite base path
-* Dist folder not copied properly
+* Dist folder not copied
 
 ---
 
-## **📈 Roadmap**
+# **📈 Roadmap**
 
+### **Completed**
+
+✔ Containerization
 ✔ Azure deployment
-✔ Docker containerization
-✔ Custom domain & SSL
-⬜ Add backend (Supabase / Convex / Node API)
-⬜ Add AI agent backend (CrewAI, LangChain)
+✔ Custom domain
+✔ HTTPS integration
+
+### **Planned**
+
+⬜ Backend (Supabase / Convex / Node API)
+⬜ AI agent backend (CrewAI / LangChain)
 ⬜ CI/CD automation
-⬜ Autoscaling rules
-⬜ Cloudflare WAF + CDN
-⬜ Role-based admin dashboard
+⬜ Autoscaling (CPU / RPS)
+⬜ Cloudflare CDN + WAF
+⬜ Role-based dashboards
 
 ---
 
-## **🤝 Contributing**
+# **📜 License**
 
-Pull requests are welcome.
-Ensure consistent formatting and add documentation for new features.
-
----
-
-## **📜 License**
-
-MIT License — free for personal and commercial use.
-
+MIT License — free for commercial and personal use.
